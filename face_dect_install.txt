@@ -1,0 +1,3 @@
+pip install wheel numpy
+pip install dlib-bin==19.24.6
+pip install face-recognition
