@@ -1,3 +1,10 @@
 pip install wheel numpy
 pip install dlib-bin==19.24.6
 pip install face-recognition
+def check_target(row):
+            target = row.get('對象', '')
+            if not target or target.strip() == '':
+                return True  # 全體學生
+            else:
+                target_ids = [x.strip() for x in target.split(',')]
+                return str(student_id) in target_ids  # student_id 是當前學生學號
