@@ -1,10 +1,28 @@
 pip install wheel numpy
 pip install dlib-bin==19.24.6
 pip install face-recognition
-def check_target(row):
-            target = row.get('對象', '')
-            if not target or target.strip() == '':
-                return True  # 全體學生
-            else:
-                target_ids = [x.strip() for x in target.split(',')]
-                return str(student_id) in target_ids  # student_id 是當前學生學號
+import pandas as pd
+
+data_list = []
+
+for index, task in enumerate(task_list):
+    if len(task) == 0:
+        data_list.append([])
+        continue
+
+    # 依日期篩選並建立副本
+    filter_data = task[task['日期'] == date_].copy()
+
+    # 對象欄位空值填 ''
+    filter_data['對象'] = filter_data['對象'].fillna('')
+
+    # 建立布林遮罩：全體學生或包含當前 student_id
+    pattern = rf'\b{student_id}\b'  # 正則匹配完整學號
+    mask = (filter_data['對象'] == '') | filter_data['對象'].str.contains(pattern)
+
+    filter_data = filter_data[mask]
+
+    # 取需要的欄位，轉成一維 list
+    rows = filter_data[[task_string[index]]].values.tolist()
+    row = [item for r in rows for item in r]
+    data_list.append(row)
