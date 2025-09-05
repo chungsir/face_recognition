@@ -58,3 +58,17 @@ def handle_query_homework(self, user_id, reply_token, event, event_value, event_
 
     mes=util.create_homework_flex_message(data,date_,event_value_1)
     util.reply_to_line(reply_token, mes)
+
+
+
+def get_class_id(search_id):
+    student_ = load_data()
+    # print(student)
+
+    for s in student_:
+        for key, value in s.items():
+            if value == search_id:
+
+                return s.get("class_id")
+    return None
+
