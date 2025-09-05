@@ -3,26 +3,58 @@ pip install dlib-bin==19.24.6
 pip install face-recognition
 import pandas as pd
 
-data_list = []
+def handle_query_homework(self, user_id, reply_token, event, event_value, event_value_1):
+    homework_df= pd.DataFrame(CACHE['homework'])
+    task_list_df=pd.DataFrame(CACHE['task_list'])
+    additional_df = pd.DataFrame(CACHE['additional'])
+    #判斷是否是第一次查詢
+    if not event_value:
+        #這是第一次查詢只有一個button
+        s=datetime.datetime.now().date()
+        s=s.strftime('%Y-%m-%d')
+        # 先判斷是否是六日
+        date_=util.get_today_weekend_string(s,0)[0]
 
-for index, task in enumerate(task_list):
-    if len(task) == 0:
-        data_list.append([])
-        continue
+    else:
+        #這不是第一次查詢有兩個button
+        # 先判斷是否是六日
+        date_=util.get_today_weekend_string(event_value,int(event_value_1))[0]
+    #再送出要查詢的日期
+    #家庭作業
+    task_list=[homework_df,task_list_df,additional_df]
+    task_string=['家庭作業內容','明天注意事項','額外公告']
+    data_list=[]
+    for index,task in enumerate(task_list):
+    
+        if len(task)>0:
+            #依日期查詢
+            filter_data = task[task['日期'] == date_].copy()
 
-    # 依日期篩選並建立副本
-    filter_data = task[task['日期'] == date_].copy()
+            # 對象欄位空值填 ''
+            filter_data['對象'] = filter_data['對象'].astype(str).replace('nan', '')
 
-    # 對象欄位空值填 ''
-    filter_data['對象'] = filter_data['對象'].fillna('')
+            student_id=util.get_class_id(user_id)
 
-    # 建立布林遮罩：全體學生或包含當前 student_id
-    pattern = rf'\b{student_id}\b'  # 正則匹配完整學號
-    mask = (filter_data['對象'] == '') | filter_data['對象'].str.contains(pattern)
+            # 建立布林遮罩：全體學生或包含當前 student_id
+            pattern = rf'\b{str(student_id)}\b'  # 正則匹配完整學號
+          
 
-    filter_data = filter_data[mask]
+            mask = (filter_data['對象'] == '') | filter_data['對象'].str.contains(pattern)
 
-    # 取需要的欄位，轉成一維 list
-    rows = filter_data[[task_string[index]]].values.tolist()
-    row = [item for r in rows for item in r]
-    data_list.append(row)
+            filter_data = filter_data[mask]
+
+            # 取需要的欄位，轉成一維 list
+            rows = filter_data[[task_string[index]]].values.tolist()
+            row = [item for r in rows for item in r]
+            data_list.append(row)
+        else:
+            data_list.append([])
+
+    data = {
+        "家庭作業": data_list[0],
+        "明天注意事項": data_list[1],
+        "額外公告": data_list[2],
+    }
+
+    mes=util.create_homework_flex_message(data,date_,event_value_1)
+    util.reply_to_line(reply_token, mes)
